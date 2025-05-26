@@ -1,5 +1,13 @@
 @import 'tailwindcss';
 
+@theme {
+    --color-calm-grey: #e7e6e2;
+    --font-inter: 'InterVariable', 'sans-serif';
+    --font-inter--font-feature-settings:
+        'liga', 'calt', 'ss07', 'ss08', 'cv01', 'cv08', 'cv09', 'cv10';
+    --font-inter-font-variation-settings: 'normal';
+}
+
 /* @import './base.css';
 
 #app {
