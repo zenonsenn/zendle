@@ -12,10 +12,20 @@ const letterClassNotNull = props.letterClass == null
 
 <template>
     <div class="w-full rounded-lg bg-gray-300 text-lg sm:text-xl">
-        <div id="content" :class="renderedClass" v-if="letterClassNotNull">
+        <div
+            @click="$emit('letterTap', props.letter)"
+            id="content"
+            :class="renderedClass"
+            v-if="letterClassNotNull"
+        >
             {{ props.letter }}
         </div>
-        <div id="content" :class="renderedClass + ' w-full'" v-else>
+        <div
+            @click="$emit('letterTap', props.letter)"
+            id="content"
+            :class="renderedClass + ' w-full'"
+            v-else
+        >
             <div class="flex h-full items-center justify-center">{{ props.letter }}</div>
         </div>
     </div>
