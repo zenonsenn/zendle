@@ -63,7 +63,7 @@ const displayModal = () => {
     modalTimeoutId.value = setTimeout(() => {
         document.getElementById('cookies-modal')?.classList.remove('flex')
         document.getElementById('cookies-modal')?.classList.add('hidden')
-    }, 5000)
+    }, 8000)
 }
 
 const closeModal = () => {
