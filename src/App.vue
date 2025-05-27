@@ -57,23 +57,23 @@ const submitAnswer = async (answer: string | null) => {
         if (answers.length > 0 && lastUserLetter == firstInputLetter) {
             finalScore.value += 10.0
             multiplier.value += 1 / (10.0 * Math.sqrt(multiplier.value))
-            finalScore.value *= multiplier.value
+            // finalScore.value *= multiplier.value
         } else if (answers.length > 0 && lastUserLetter != firstInputLetter) {
             finalScore.value *=
                 1.0 -
                 ((lastUserLetter!.charCodeAt(0) - answer.substring(0, 1).charCodeAt(0)) /
                     lastUserLetter!.charCodeAt(0)) *
                     100
-            multiplier.value = 1.01
             finalScore.value *= multiplier.value
+            multiplier.value = 1.01
         } else {
             finalScore.value += 10.0
         }
 
         if (answer.length == targetLength.value) {
-            finalScore.value += 50.0
+            finalScore.value += 5.0
         } else {
-            finalScore.value -= finalScore.value * Math.abs(answer.length - targetLength.value)
+            finalScore.value *= 1.0 - Math.abs(answer.length - targetLength.value) / 25.0
         }
 
         // 2. Set last letter as first letter for the new word
@@ -85,7 +85,9 @@ const submitAnswer = async (answer: string | null) => {
 
         // 2a. Show custom messages that tell the player what number
         // of letters the word shoule have
-        targetLength.value = Math.round(Math.max(4.0, Math.random() * 8.0))
+        // The min and max word length could probably be tuned by the
+        // difficulty set by the user
+        targetLength.value = Math.round(Math.max(3.0, Math.random() * 7.0))
 
         // 2b. Show custom messages based on a numerical threshold
         document.getElementById('next-letter')!.textContent =
