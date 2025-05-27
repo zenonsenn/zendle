@@ -7,8 +7,11 @@
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
+    --color-red-500: oklch(63.7% 0.237 25.331);
     --color-gray-300: oklch(87.2% 0.01 258.338);
+    --color-gray-400: oklch(70.7% 0.022 261.325);
     --color-gray-500: oklch(55.1% 0.027 264.364);
+    --color-black: #000;
     --spacing: 0.25rem;
     --text-lg: 1.125rem;
     --text-lg--line-height: calc(1.75 / 1.125);
@@ -23,6 +26,9 @@
     --color-calm-grey: #e7e6e2;
     --font-inter: 'InterVariable', 'sans-serif';
     --font-inter--font-feature-settings: 'liga', 'calt', 'ss07', 'ss08', 'cv01', 'cv08', 'cv09', 'cv10';
+    --animate-penalty: penalty 1s ease-in;
+    --animate-penalty-wiggle: penalty-wiggle 0.4s ease-in-out;
+    --animate-terminal: terminal 1.5s linear infinite;
   }
 }
 @layer base {
@@ -204,6 +210,9 @@
   .hidden {
     display: none;
   }
+  .table {
+    display: table;
+  }
   .h-13 {
     height: calc(var(--spacing) * 13);
   }
@@ -231,8 +240,29 @@
   .min-w-fit {
     min-width: fit-content;
   }
+  .flex-grow {
+    flex-grow: 1;
+  }
   .grow {
     flex-grow: 1;
+  }
+  .border-collapse {
+    border-collapse: collapse;
+  }
+  .transform {
+    transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
+  }
+  .animate-penalty {
+    animation: var(--animate-penalty);
+  }
+  .animate-penalty-wiggle {
+    animation: var(--animate-penalty-wiggle);
+  }
+  .animate-terminal {
+    animation: var(--animate-terminal);
+  }
+  .resize {
+    resize: both;
   }
   .flex-col {
     flex-direction: column;
@@ -271,6 +301,9 @@
   .bg-gray-300 {
     background-color: var(--color-gray-300);
   }
+  .bg-gray-400 {
+    background-color: var(--color-gray-400);
+  }
   .p-3 {
     padding: calc(var(--spacing) * 3);
   }
@@ -305,6 +338,16 @@
   }
   .text-gray-500 {
     color: var(--color-gray-500);
+  }
+  .text-red-500 {
+    color: var(--color-red-500);
+  }
+  .underline {
+    text-decoration-line: underline;
+  }
+  .outline {
+    outline-style: var(--tw-outline-style);
+    outline-width: 1px;
   }
   .sm\:flex {
     @media (width >= 40rem) {
@@ -348,6 +391,26 @@
     }
   }
 }
+@property --tw-rotate-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-y {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-z {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-y {
+  syntax: "*";
+  inherits: false;
+}
 @property --tw-border-style {
   syntax: "*";
   inherits: false;
@@ -357,11 +420,54 @@
   syntax: "*";
   inherits: false;
 }
+@property --tw-outline-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@keyframes penalty {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+}
+@keyframes penalty-wiggle {
+  0%, 100% {
+    color: var(--color-black);
+    transform: translateX(0);
+  }
+  33% {
+    color: var(--color-red-500);
+    transform: translateX(5px);
+  }
+  66% {
+    color: var(--color-red-500);
+    transform: translateX(-5px);
+  }
+}
+@keyframes terminal {
+  0%, 49.9%, 100% {
+    color: var(--color-black);
+  }
+  50%, 99.9% {
+    color: var(--color-gray-300);
+  }
+}
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
+      --tw-rotate-x: initial;
+      --tw-rotate-y: initial;
+      --tw-rotate-z: initial;
+      --tw-skew-x: initial;
+      --tw-skew-y: initial;
       --tw-border-style: solid;
       --tw-font-weight: initial;
+      --tw-outline-style: solid;
     }
   }
 }

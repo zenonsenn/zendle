@@ -5,13 +5,12 @@ const props = defineProps({
         type: [String, null],
     },
 })
-
 const renderedClass = 'flex h-13 sm:h-16 items-center justify-center font-bold ' + props.letterClass
 const letterClassNotNull = props.letterClass == null
 </script>
 
 <template>
-    <div class="w-full rounded-lg bg-gray-300 text-lg sm:text-xl">
+    <div id="parent-content" class="w-full rounded-lg bg-gray-300 text-lg sm:text-xl">
         <div
             @click="$emit('letterTap', props.letter)"
             id="content"

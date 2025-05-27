@@ -21,7 +21,9 @@ const currentKeyDown: Set<string> = new Set()
 const answers: Array<string> = []
 const finalScore = ref(0.0)
 const multiplier = ref(1.01)
-const targetLength = ref(5)
+const targetLength = ref(69)
+const actualScore = ref(0.0)
+const difference = ref(0.0)
 
 const validateAnswer = async (answer: string) => {
     try {
@@ -59,21 +61,62 @@ const submitAnswer = async (answer: string | null) => {
             multiplier.value += 1 / (10.0 * Math.sqrt(multiplier.value))
             // finalScore.value *= multiplier.value
         } else if (answers.length > 0 && lastUserLetter != firstInputLetter) {
-            finalScore.value *=
+            // Calculate penalty when the user used a different first letter than what is obliged
+            actualScore.value = finalScore.value
+            const penalty =
                 1.0 -
-                ((lastUserLetter!.charCodeAt(0) - answer.substring(0, 1).charCodeAt(0)) /
-                    lastUserLetter!.charCodeAt(0)) *
-                    100
+                (lastUserLetter!.charCodeAt(0) - answer.substring(0, 1).charCodeAt(0)) /
+                    lastUserLetter!.charCodeAt(0)
+            difference.value = actualScore.value - actualScore.value * penalty
+            finalScore.value *= penalty
+
+            // Display the penalty
+            document.getElementById('penalty-modal')?.classList.remove('hidden')
+            document.getElementById('penalty-modal')?.classList.add('flex', 'animate-penalty')
+
+            setTimeout(() => {
+                document.getElementById('penalty-modal')?.classList.remove('flex')
+                document.getElementById('penalty-modal')?.classList.add('hidden', 'animate-penalty')
+            }, 900)
+
             finalScore.value *= multiplier.value
+
+            // Reset multiplier
             multiplier.value = 1.01
+
+            // Display the penalty of multiplier value being reset
+            document
+                .getElementById('multiplier-penalty-modal')
+                ?.classList.add('animate-penalty-wiggle')
+
+            setTimeout(() => {
+                document
+                    .getElementById('multiplier-penalty-modal')
+                    ?.classList.remove('animate-penalty-wiggle')
+            }, 1000)
         } else {
             finalScore.value += 10.0
         }
 
         if (answer.length == targetLength.value) {
+            finalScore.value += 2.5
+        } else if (targetLength.value == 69) {
             finalScore.value += 5.0
-        } else {
-            finalScore.value *= 1.0 - Math.abs(answer.length - targetLength.value) / 25.0
+        } else if (answer.length != targetLength.value && targetLength.value != 69) {
+            // Calculate penalty when the user inputted length is different than the obliged length
+            actualScore.value = finalScore.value
+            const penalty = 1.0 - Math.abs(answer.length - targetLength.value) / 25.0
+            difference.value = actualScore.value - actualScore.value * penalty
+            finalScore.value *= penalty
+
+            // Display the difference as something that appears, translates down, and dissapears
+            document.getElementById('penalty-modal')?.classList.remove('hidden')
+            document.getElementById('penalty-modal')?.classList.add('flex', 'animate-penalty')
+
+            setTimeout(() => {
+                document.getElementById('penalty-modal')?.classList.remove('flex')
+                document.getElementById('penalty-modal')?.classList.add('hidden', 'animate-penalty')
+            }, 900)
         }
 
         // 2. Set last letter as first letter for the new word
@@ -91,8 +134,19 @@ const submitAnswer = async (answer: string | null) => {
 
         // 2b. Show custom messages based on a numerical threshold
         document.getElementById('next-letter')!.textContent =
-            'Great! Now type another valid English word starting with ' + lastCorrectLetter + '!'
-
+            'Great! Now type another valid English word starting with ' +
+            lastCorrectLetter +
+            '!\nAnswer must be a ' +
+            targetLength.value +
+            ' letter word'
+        if (targetLength.value == 69) {
+            document.getElementById('next-letter')!.textContent +=
+                'Great! Now type another valid English word starting with ' +
+                lastCorrectLetter +
+                '!'
+        }
+        document.getElementById('terminal-prefix')!.classList.remove('hidden')
+        document.getElementById('terminal-prefix')!.classList.add('flex')
         document.getElementById('letter-field')!.textContent = ''
 
         // 3. Clean up
@@ -108,6 +162,8 @@ const submitAnswer = async (answer: string | null) => {
 
         // 2. Clean up
         document.getElementById('next-letter')!.textContent = ''
+        document.getElementById('terminal-prefix')!.classList.remove('flex')
+        document.getElementById('terminal-prefix')!.classList.add('hidden')
         document.getElementById('letter-field')!.textContent = ''
         currentKeyDown.clear()
         hasCatStoppedRestingOnKeyboard = true
@@ -116,6 +172,9 @@ const submitAnswer = async (answer: string | null) => {
 
 const displayLetter = async (letter: string | null) => {
     if (letter != null) {
+        document.getElementById('terminal-prefix')!.classList.remove('flex')
+        document.getElementById('terminal-prefix')!.classList.add('hidden')
+
         document.getElementById('letter-field')!.textContent += letter
         return
     }
@@ -132,13 +191,23 @@ const displayLetter = async (letter: string | null) => {
             0,
             oldText!.length - 1,
         )
+
+        if (document.getElementById('letter-field')!.textContent == '') {
+            document.getElementById('terminal-prefix')!.classList.add('flex')
+            document.getElementById('terminal-prefix')!.classList.remove('hidden')
+        }
         return
     }
     if (keyToDisplay.length > 1) {
         // No need to display anything other than singular letters, backspace, and enter
         return
     }
+
+    // Display the actual letter
     if (upperCase.test(keyToDisplay)) {
+        document.getElementById('terminal-prefix')!.classList.remove('flex')
+        document.getElementById('terminal-prefix')!.classList.add('hidden')
+
         document.getElementById('letter-field')!.textContent += keyToDisplay
     }
 }
@@ -155,6 +224,11 @@ const inputLetter = async (letter: string) => {
             0,
             oldText!.length - 1,
         )
+
+        if (document.getElementById('letter-field')!.textContent == '') {
+            document.getElementById('terminal-prefix')!.classList.add('flex')
+            document.getElementById('terminal-prefix')!.classList.remove('hidden')
+        }
         return
     }
 
@@ -163,7 +237,18 @@ const inputLetter = async (letter: string) => {
 
 const restart = () => {
     // TODO: Create a smoother experience
-    location.reload()
+    // location.reload()
+    document.getElementById('terminal-prefix')!.classList.add('flex')
+    document.getElementById('terminal-prefix')!.classList.remove('hidden')
+
+    document.getElementById('game-over')!.classList.add('hidden')
+    document.getElementById('game-over')!.classList.remove('flex')
+
+    document.getElementById('next-letter')!.textContent =
+        'Start with any valid (pre-2020) English word...'
+
+    finalScore.value = 0.0
+    multiplier.value = 1.01
 }
 
 onMounted(() => {
@@ -228,10 +313,20 @@ onMounted(() => {
             <!-- Header -->
             <div class="mt-4 flex h-fit w-full items-center justify-center">
                 <div class="rounded-lg bg-gray-300 p-3">
-                    <p>
-                        Score: {{ finalScore.toFixed(2) }} | Multiplier:
-                        {{ multiplier.toFixed(2) }} | Answer using a {{ targetLength }} letter word
-                    </p>
+                    <div class="flex flex-row">
+                        Score:
+                        <div class="relative">
+                            &nbsp;{{ finalScore.toFixed(2) }}&nbsp;
+                            <!-- Penalty modal -->
+                            <div id="penalty-modal" class="absolute top-4 hidden text-red-500">
+                                -{{ difference.toFixed(2) }}
+                            </div>
+                        </div>
+                        | Multiplier:&nbsp;
+                        <p id="multiplier-penalty-modal" class="">
+                            {{ multiplier.toFixed(2) }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -241,7 +336,12 @@ onMounted(() => {
                     class="flex h-full max-w-[600px] min-w-[300px] grow flex-col items-center justify-center"
                 >
                     <div class="relative w-full">
-                        <div id="letter-field" class="mb-2 text-3xl font-bold"></div>
+                        <div class="mb-2 flex flex-row">
+                            <div id="terminal-prefix" class="animate-terminal text-3xl font-bold">
+                                _
+                            </div>
+                            <div id="letter-field" class="text-3xl font-bold"></div>
+                        </div>
                         <div id="next-letter" class="absolute left-0 text-xl text-gray-500">
                             Start with any valid (pre-2020) English word...
                         </div>
