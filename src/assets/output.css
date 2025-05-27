@@ -21,14 +21,17 @@
     --text-3xl--line-height: calc(2.25 / 1.875);
     --font-weight-bold: 700;
     --radius-lg: 0.5rem;
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
     --color-calm-grey: #e7e6e2;
+    --color-zendle-orange: #fa982e;
     --font-inter: 'InterVariable', 'sans-serif';
     --font-inter--font-feature-settings: 'liga', 'calt', 'ss07', 'ss08', 'cv01', 'cv08', 'cv09', 'cv10';
     --animate-penalty: penalty 1s ease-in;
     --animate-penalty-wiggle: penalty-wiggle 0.4s ease-in-out;
     --animate-terminal: terminal 1.5s linear infinite;
+    --animate-loading: loading 3s ease-in-out infinite;
   }
 }
 @layer base {
@@ -189,8 +192,17 @@
   .top-4 {
     top: calc(var(--spacing) * 4);
   }
+  .-left-4 {
+    left: calc(var(--spacing) * -4);
+  }
   .left-0 {
     left: calc(var(--spacing) * 0);
+  }
+  .left-4 {
+    left: calc(var(--spacing) * 4);
+  }
+  .z-10 {
+    z-index: 10;
   }
   .m-4 {
     margin: calc(var(--spacing) * 4);
@@ -213,6 +225,9 @@
   .table {
     display: table;
   }
+  .h-12 {
+    height: calc(var(--spacing) * 12);
+  }
   .h-13 {
     height: calc(var(--spacing) * 13);
   }
@@ -224,6 +239,9 @@
   }
   .h-screen {
     height: 100vh;
+  }
+  .w-12 {
+    width: calc(var(--spacing) * 12);
   }
   .w-fit {
     width: fit-content;
@@ -252,6 +270,9 @@
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
   }
+  .animate-loading {
+    animation: var(--animate-loading);
+  }
   .animate-penalty {
     animation: var(--animate-penalty);
   }
@@ -260,6 +281,9 @@
   }
   .animate-terminal {
     animation: var(--animate-terminal);
+  }
+  .cursor-pointer {
+    cursor: pointer;
   }
   .resize {
     resize: both;
@@ -304,6 +328,15 @@
   .bg-gray-400 {
     background-color: var(--color-gray-400);
   }
+  .bg-red-500 {
+    background-color: var(--color-red-500);
+  }
+  .bg-zendle-orange {
+    background-color: var(--color-zendle-orange);
+  }
+  .p-1 {
+    padding: calc(var(--spacing) * 1);
+  }
   .p-3 {
     padding: calc(var(--spacing) * 3);
   }
@@ -313,8 +346,11 @@
   .px-4 {
     padding-inline: calc(var(--spacing) * 4);
   }
-  .align-bottom {
-    vertical-align: bottom;
+  .pb-1 {
+    padding-bottom: calc(var(--spacing) * 1);
+  }
+  .align-middle {
+    vertical-align: middle;
   }
   .font-inter {
     font-family: var(--font-inter);
@@ -348,6 +384,38 @@
   .outline {
     outline-style: var(--tw-outline-style);
     outline-width: 1px;
+  }
+  .ease-in-out {
+    --tw-ease: var(--ease-in-out);
+    transition-timing-function: var(--ease-in-out);
+  }
+  .hover\:bg-gray-400 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-gray-400);
+      }
+    }
+  }
+  .hover\:bg-zendle-orange {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-zendle-orange);
+      }
+    }
+  }
+  .hover\:underline {
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-line: underline;
+      }
+    }
+  }
+  .hover\:decoration-2 {
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-thickness: 2px;
+      }
+    }
   }
   .sm\:flex {
     @media (width >= 40rem) {
@@ -425,12 +493,16 @@
   inherits: false;
   initial-value: solid;
 }
+@property --tw-ease {
+  syntax: "*";
+  inherits: false;
+}
 @keyframes penalty {
   0% {
     opacity: 1;
     transform: translateY(0);
   }
-  90% {
+  70%, 100% {
     opacity: 0;
     transform: translateY(50px);
   }
@@ -457,6 +529,23 @@
     color: var(--color-gray-300);
   }
 }
+@keyframes loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(360deg);
+  }
+  50% {
+    transform: rotate(360deg);
+  }
+  75% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
@@ -468,6 +557,7 @@
       --tw-border-style: solid;
       --tw-font-weight: initial;
       --tw-outline-style: solid;
+      --tw-ease: initial;
     }
   }
 }

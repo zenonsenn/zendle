@@ -3,10 +3,10 @@ import ZendleLetter from '@/components/ZendleLetter.vue'
 
 const simulatePress = (key: string) => {
     document.getElementById(key)!.classList.remove('bg-gray-300')
-    document.getElementById(key)!.classList.add('bg-gray-400')
+    document.getElementById(key)!.classList.add('bg-zendle-orange')
 
     setTimeout(() => {
-        document.getElementById(key)!.classList.remove('bg-gray-400')
+        document.getElementById(key)!.classList.remove('bg-zendle-orange')
         document.getElementById(key)!.classList.add('bg-gray-300')
     }, 250)
 }
