@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@112.5,100..800&display=swap');
 @import 'tailwindcss';
 
 @theme {
@@ -7,6 +8,7 @@
     --font-inter--font-feature-settings:
         'liga', 'calt', 'ss07', 'ss08', 'cv01', 'cv08', 'cv09', 'cv10';
     --font-inter-font-variation-settings: 'normal';
+    --font-martian-mono: 'Martian Mono', 'monospace';
 
     --animate-penalty: penalty 1s ease-in;
     --animate-penalty-wiggle: penalty-wiggle 0.4s ease-in-out;

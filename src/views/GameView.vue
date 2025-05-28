@@ -5,9 +5,9 @@ import { onMounted, reactive, ref } from 'vue'
 let previousKey: string | null = null
 let latestKey: string | null = null
 let hasCatStoppedRestingOnKeyboard: boolean = true
-let lastCorrectLetter: string | null = null
-let answers: Array<string> = []
 
+const lastCorrectLetter = ref('')
+const answers = ref<string[]>([])
 const rawWordlist = ref<string[]>()
 const dictWordlist = reactive(new Map<string, number>())
 const upperCase = /[A-Z]/
@@ -21,6 +21,7 @@ const differenceLetter = ref(0.0)
 // const saveScore = ref(true)
 const sameAnswerMultiplier = ref(0.0)
 const currentDifficulty = ref('Easy')
+const difficultyAtStart = ref('Easy')
 const currentDifficultyMultiplier = ref(1.0)
 const maxLetterLength = ref(7.0)
 const minLetterLength = ref(3.0)
@@ -88,7 +89,7 @@ const submitAnswer = (answer: string | null) => {
 
     let answerExists = false
     let answerCorrect = false
-    if (answers.includes(answer)) {
+    if (answers.value!.includes(answer)) {
         sameAnswerMultiplier.value = Math.min(sameAnswerMultiplier.value + 0.1, 0.99)
         answerExists = true
         answerCorrect = true
@@ -96,6 +97,8 @@ const submitAnswer = (answer: string | null) => {
     if (!answerCorrect) {
         answerCorrect = validateAnswer(answer)
     }
+    // console.log(answer + ' ' + answerCorrect)
+
     if (answerCorrect) {
         // 0. Increase count of the user understanding because there is no need to show the same message over
         // and over again
@@ -104,16 +107,24 @@ const submitAnswer = (answer: string | null) => {
         // 1. Set scores: successful chain creation, if the word played is the same length as game asked, and penalties
         const firstInputLetter = answer.substring(0, 1)
         let lastUserLetter = null
-        if (answers.length > 0) {
-            lastUserLetter = answers[answers.length - 1]
-                .substring(answers[answers.length - 1].length - 1)
+        if (answers.value!.length > 0) {
+            lastUserLetter = answers
+                .value![
+                    answers.value!.length - 1
+                ].substring(answers.value![answers.value!.length - 1].length - 1)
                 .toUpperCase()
         }
-        if (answers.length > 0 && lastUserLetter == firstInputLetter) {
+
+        // console.log('Last letter ' + lastUserLetter)
+        // console.log('First letter ' + firstInputLetter)
+
+        if (answers.value!.length > 0 && lastUserLetter == firstInputLetter) {
+            // console.log('Good job same letter')
             finalScore.value += 10.0
             multiplier.value +=
-                1 / (10.0 * currentDifficultyMultiplier.value * Math.sqrt(multiplier.value))
-        } else if (answers.length > 0 && lastUserLetter != firstInputLetter) {
+                currentDifficultyMultiplier.value / (10.0 * Math.sqrt(multiplier.value))
+        } else if (answers.value!.length > 0 && lastUserLetter != firstInputLetter) {
+            // console.log('User input incorrect letter')
             // Calculate penalty when the user used a different first letter than what is obliged
             actualScore.value = finalScore.value
             const distance =
@@ -159,14 +170,18 @@ const submitAnswer = (answer: string | null) => {
                     ?.classList.remove('animate-penalty-wiggle')
             }, 1000)
         } else {
+            // console.log('Genesis')
             finalScore.value += 10.0
         }
 
         if (answer.length == targetLength.value) {
+            // console.log('Good job same length')
             finalScore.value += 2.5
         } else if (targetLength.value == 69) {
+            // console.log('Genesis')
             finalScore.value += 5.0
         } else if (answer.length != targetLength.value && targetLength.value != 69) {
+            // console.log('User input length different')
             // Calculate penalty when the user inputted length is different than the obliged length
             actualScore.value = finalScore.value
             const error = Math.abs(answer.length - targetLength.value) / targetLength.value
@@ -194,11 +209,14 @@ const submitAnswer = (answer: string | null) => {
 
         // 2. Set last letter as first letter for the new word
         // console.log(answer.substring(answer.length - 1))
-        lastCorrectLetter = answer.substring(answer.length - 1).toUpperCase()
+        lastCorrectLetter.value = answer.substring(answer.length - 1).toUpperCase()
 
         if (!answerExists) {
-            answers.push(answer)
+            // console.log('Answer never played')
+            answers.value!.push(answer)
         } else {
+            // console.log('Duplicate answer')
+            answers.value!.push(answer)
             multiplier.value -= multiplier.value * sameAnswerMultiplier.value
             // Display the penalty of multiplier value being affected
             document
@@ -225,7 +243,7 @@ const submitAnswer = (answer: string | null) => {
         if (userUnderstandsHowTheGameWorks.value < 5) {
             document.getElementById('next-letter')!.textContent =
                 'Great! Now type another valid English word starting with ' +
-                lastCorrectLetter +
+                lastCorrectLetter.value +
                 '!\nAnswer must be a ' +
                 targetLength.value +
                 ' letter word or you will get penalized :('
@@ -285,10 +303,14 @@ const submitAnswer = (answer: string | null) => {
         document.getElementById('terminal-prefix')!.classList.remove('flex')
         document.getElementById('terminal-prefix')!.classList.add('hidden')
         document.getElementById('letter-field')!.textContent = ''
+
         currentKeyDown.clear()
-        answers = []
+        answers.value = []
+
+        multiplier.value = 1.01
         targetLength.value = 69
         userUnderstandsHowTheGameWorks.value = 7
+
         hasCatStoppedRestingOnKeyboard = true
     }
 }
@@ -359,6 +381,12 @@ const inputLetter = (letter: string) => {
 }
 
 const changeDifficulty = () => {
+    if (answers.value!.length != 0) {
+        currentDifficulty.value = difficultyAtStart.value
+        document.getElementById('difficulty-button')?.blur()
+        return
+    }
+
     currentDifficulty.value = document.getElementById('difficulty-button')!.textContent!
     switch (currentDifficulty.value) {
         case 'Easy':
@@ -367,7 +395,7 @@ const changeDifficulty = () => {
             maxLetterLength.value = 10.0
             document.getElementById('difficulty-button')!.textContent = 'Medium'
             currentDifficulty.value = 'Medium'
-            currentDifficultyMultiplier.value = 1.25
+            currentDifficultyMultiplier.value = 2.0
             break
         case 'Medium':
             // Cycle to hard
@@ -375,7 +403,7 @@ const changeDifficulty = () => {
             maxLetterLength.value = 15.0
             document.getElementById('difficulty-button')!.textContent = 'Hard'
             currentDifficulty.value = 'Hard'
-            currentDifficultyMultiplier.value = 1.69
+            currentDifficultyMultiplier.value = 3.0
             break
         case 'Hard':
             // Cycle to lexicomaxxer
@@ -383,7 +411,7 @@ const changeDifficulty = () => {
             maxLetterLength.value = 20.0
             document.getElementById('difficulty-button')!.textContent = 'Lexicomaxxer'
             currentDifficulty.value = 'Lexicomaxxer'
-            currentDifficultyMultiplier.value = 3.14
+            currentDifficultyMultiplier.value = 5.0
             break
         case 'Lexicomaxxer':
             // Cycle to easy
@@ -401,6 +429,7 @@ const changeDifficulty = () => {
             currentDifficulty.value = 'Easy'
             currentDifficultyMultiplier.value = 1.0
     }
+
     document.getElementById('difficulty-button')?.blur()
 }
 
@@ -416,11 +445,14 @@ const restart = () => {
     document.getElementById('next-letter')!.textContent =
         "Let's start again with any valid English word."
 
+    difficultyAtStart.value = currentDifficulty.value
     finalScore.value = 0.0
     multiplier.value = 1.01
 }
 
 onMounted(() => {
+    difficultyAtStart.value = currentDifficulty.value
+
     let counter = 0
 
     document.getElementById('difficulty-button')!.textContent = 'Easy'
@@ -531,21 +563,27 @@ onMounted(() => {
                 >
                     <div class="relative w-full">
                         <div class="mb-2 flex flex-row">
-                            <div v-if="targetLength != 69" class="flex flex-row text-3xl font-bold">
-                                {{ lastCorrectLetter }}&nbsp;
+                            <div
+                                v-if="targetLength != 69"
+                                class="flex flex-row font-martian-mono text-3xl"
+                            >
+                                {{ lastCorrectLetter }}
                                 <div
                                     v-for="uscore in new Array(targetLength - 1).fill('_')"
                                     :key="uscore"
                                 >
-                                    {{ uscore }}&nbsp;
+                                    {{ uscore }}
                                 </div>
                             </div>
                         </div>
                         <div class="mb-2 flex flex-row">
-                            <div id="terminal-prefix" class="animate-terminal text-3xl font-bold">
+                            <div
+                                id="terminal-prefix"
+                                class="animate-terminal font-martian-mono text-3xl"
+                            >
                                 _
                             </div>
-                            <div id="letter-field" class="text-3xl font-bold"></div>
+                            <div id="letter-field" class="font-martian-mono text-3xl"></div>
                         </div>
                         <div id="next-letter" class="absolute left-0 text-xl text-gray-500">
                             Welcome to Zendle! Start by typing any valid English word.
@@ -555,14 +593,15 @@ onMounted(() => {
                             class="static hidden h-fit w-full min-w-fit items-center justify-center rounded-lg bg-gray-300 p-4 text-xl"
                         >
                             <div v-if="userHighestScoreEver > 0">
-                                Your {{ currentDifficulty.toLowerCase() }} difficulty game is over
+                                Your {{ difficultyAtStart.toLowerCase() }} difficulty game is over
                                 because the answer isn't a valid English word :( <br />
                                 Your score is {{ finalScore.toFixed(2) }}. Your highest score is
                                 {{ userHighestScoreEver.toFixed(2) }}&nbsp;&nbsp;
                             </div>
                             <div v-else>
-                                Game over. Your score is
-                                {{ finalScore.toFixed(2) }}&nbsp;&nbsp;
+                                Your {{ difficultyAtStart.toLowerCase() }} difficulty game is over
+                                because the answer isn't a valid English word :( <br />
+                                Your score is {{ finalScore.toFixed(2) }}&nbsp;&nbsp;
                             </div>
                             <button
                                 v-on:click="restart"
