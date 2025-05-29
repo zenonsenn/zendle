@@ -1,6 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@112.5,100..800&display=swap');
 @import 'tailwindcss';
 
+@layer base {
+    h1 {
+        font-size: xx-large;
+        font-weight: bold;
+        margin: 1rem 0rem 1rem 0rem;
+    }
+    h2 {
+        font-size: x-large;
+        font-weight: bold;
+        margin: 0.5rem 0rem 0.5rem 0rem;
+    }
+    li {
+        margin-left: 2rem;
+        list-style-type: disc;
+    }
+}
+
 @theme {
     --color-calm-grey: #e7e6e2;
     --color-zendle-orange: #fa982e;

@@ -17,7 +17,7 @@ const thirdRowLetters = ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
 </script>
 
 <template>
-    <div class="flex w-fit flex-col gap-y-2 p-4 sm:gap-y-3 sm:px-0 sm:py-4">
+    <div class="flex w-fit flex-col gap-y-2 p-4 pt-0 sm:gap-y-3 sm:px-0 sm:py-4 sm:pt-0">
         <div class="flex flex-row justify-between gap-x-1 sm:gap-x-2">
             <div v-for="item in firstRowLetters" :key="item" class="w-full">
                 <ZendleLetter
