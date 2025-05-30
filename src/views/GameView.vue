@@ -11,6 +11,7 @@ const latestKey = ref('')
 const hasCatStoppedRestingOnKeyboard = ref(true)
 const lastCorrectLetter = ref('')
 const answers = ref<string[]>([])
+const previousAnswers = ref<string[]>([])
 const upperCase = /[A-Z]/
 const currentKeyDown: Set<string> = new Set()
 const finalScore = ref(0.0)
@@ -220,6 +221,8 @@ const progressGame = (answer: string | null) => {
         answerCorrect = validateAnswer(answer)
     }
 
+    // Empty the history when the game starts i.e. first word inputted after restart
+    previousAnswers.value = []
     let lastPlayerLetter = ''
 
     // 1. Get the last letter of the word before and the word that was just played
@@ -595,6 +598,7 @@ const progressGame = (answer: string | null) => {
         document.getElementById('letter-field')!.textContent = ''
 
         currentKeyDown.clear()
+        previousAnswers.value = answers.value
         answers.value = []
 
         multiplier.value = 1.01
@@ -800,21 +804,11 @@ onMounted(() => {
                                         class="flex flex-row justify-between gap-x-2 rounded-lg bg-calm-grey px-2 py-1"
                                     >
                                         <input
-                                            v-if="currentDifficulty != 'Lexicomaxxer'"
                                             type="text"
                                             name="answer-search-field"
                                             id="answer-search-field"
                                             class="w-full"
                                             placeholder="Search..."
-                                        />
-                                        <input
-                                            v-else
-                                            type="text"
-                                            name="answer-search-field-readonly"
-                                            id="answer-search-field-readonly"
-                                            class="w-full"
-                                            placeholder="Nuh-uh!"
-                                            readonly
                                         />
                                         <button
                                             v-on:click="clearSearchBar"
@@ -835,19 +829,13 @@ onMounted(() => {
                             </div>
 
                             <div id="answer-history" class="flex grow flex-col overflow-y-scroll">
-                                <div
-                                    v-if="
-                                        answers.length == 0 && currentDifficulty != 'Lexicomaxxer'
-                                    "
-                                >
+                                <div v-if="answers.length == 0 && previousAnswers.length == 0">
                                     Your word history will appear here...
                                 </div>
+
+                                <!-- Search results -->
                                 <div
-                                    v-else-if="
-                                        answers.length != 0 &&
-                                        currentDifficulty != 'Lexicomaxxer' &&
-                                        searchMask.length != 0
-                                    "
+                                    v-else-if="answers.length != 0 && searchMask.length != 0"
                                     class="flex w-full flex-wrap gap-1"
                                 >
                                     <div
@@ -858,12 +846,10 @@ onMounted(() => {
                                         {{ item }}
                                     </div>
                                 </div>
+
+                                <!-- Nothing being searched -->
                                 <div
-                                    v-else-if="
-                                        answers.length != 0 &&
-                                        currentDifficulty != 'Lexicomaxxer' &&
-                                        searchMask.length == 0
-                                    "
+                                    v-else-if="answers.length != 0 && searchMask.length == 0"
                                     class="flex w-full flex-wrap gap-1"
                                 >
                                     <div
@@ -874,9 +860,30 @@ onMounted(() => {
                                         {{ item }}
                                     </div>
                                 </div>
-                                <div v-else>
-                                    Word history is disabled for a game with
-                                    {{ currentDifficulty }} difficulty. Good luck!
+
+                                <!-- Game over but history is still accessible -->
+                                <div
+                                    v-else-if="answers.length == 0 && previousAnswers.length != 0"
+                                    class="flex w-full flex-wrap gap-1"
+                                >
+                                    <div
+                                        v-for="(item, index) in previousAnswers"
+                                        :key="index"
+                                        class="w-fit border border-black px-2 py-1"
+                                    >
+                                        {{ item }}
+                                    </div>
+                                </div>
+
+                                <!-- Default outcome -->
+                                <div v-else class="flex w-full flex-wrap gap-1">
+                                    <div
+                                        v-for="(item, index) in answers"
+                                        :key="index"
+                                        class="w-fit border border-black px-2 py-1"
+                                    >
+                                        {{ item }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
