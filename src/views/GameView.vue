@@ -488,26 +488,39 @@ const progressGame = (answer: string | null) => {
         document.getElementById('possible-word')!.classList.add('flex')
 
         let possibleWordCount = 0
+        let secondLetter = ''
         // Reset array
         possibleWords.value = []
 
-        for (const [key, value] of dictWordlist.entries()) {
-            if (possibleWordCount > 10) {
-                break
-            }
-            const secondLetter = String.fromCharCode(Math.round(Math.random() * 25) + 65)
-
+        // Attempt 10 times to find a word with a different second letter for variety
+        // If it fails, it should just return empty and there would be less than 10 words
+        for (let i = 0; i < 10; i++) {
             if (targetLength.value == 69 || lastPlayerLetter == '') {
                 possibleWords.value.push('any other valid English word of your choice.')
                 break
-            } else if (
-                targetLength.value != 69 &&
-                key.substring(0, 1) == lastPlayerLetter &&
-                key.substring(1, 2) == secondLetter &&
-                value == targetLength.value
-            ) {
-                possibleWords.value.push(key)
-                possibleWordCount++
+            }
+
+            secondLetter = String.fromCharCode(Math.round(Math.random() * 25) + 65)
+            // For the first attempt, it will default to 'A' just in case we got unlucky
+            // with the subsequent random second letters
+            if (i == 0) {
+                secondLetter = 'A'
+            }
+
+            for (const [key, value] of dictWordlist.entries()) {
+                if (possibleWordCount > 10) {
+                    break
+                } else if (
+                    targetLength.value != 69 &&
+                    key.substring(0, 1) == lastPlayerLetter &&
+                    key.substring(1, 2) == secondLetter &&
+                    value == targetLength.value
+                ) {
+                    possibleWords.value.push(key)
+                    possibleWordCount++
+                    // If it finds one, break and let other second letters have a chance
+                    break
+                }
             }
         }
 
