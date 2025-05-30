@@ -492,9 +492,9 @@ const progressGame = (answer: string | null) => {
         // Reset array
         possibleWords.value = []
 
-        // Attempt 10 times to find a word with a different second letter for variety
+        // Attempt 50 times to find a word with a different second letter for variety
         // If it fails, it should just return empty and there would be less than 10 words
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 50; i++) {
             if (targetLength.value == 69 || lastPlayerLetter == '') {
                 possibleWords.value.push('any other valid English word of your choice.')
                 break
@@ -516,10 +516,13 @@ const progressGame = (answer: string | null) => {
                     key.substring(1, 2) == secondLetter &&
                     value == targetLength.value
                 ) {
-                    possibleWords.value.push(key)
-                    possibleWordCount++
-                    // If it finds one, break and let other second letters have a chance
-                    break
+                    if (!possibleWords.value.includes(key)) {
+                        possibleWords.value.push(key)
+                        possibleWordCount++
+                        // If it finds one, break and let other second letters have a chance
+                        break
+                    }
+                    // Else keep finding
                 }
             }
         }
