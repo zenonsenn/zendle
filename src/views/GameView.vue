@@ -426,7 +426,7 @@ const progressGame = (answer: string | null) => {
         )
 
         // 5. Show custom messages based on a numerical threshold
-        if (playerUnderstandsHowTheGameWorks.value < 5) {
+        if (playerUnderstandsHowTheGameWorks.value < 3) {
             document.getElementById('next-letter')!.textContent =
                 'Great! Now type another valid English word of your choice!\n' +
                 'Answer must be a ' +
@@ -434,6 +434,9 @@ const progressGame = (answer: string | null) => {
                 ' letter word starting with ' +
                 lastCorrectLetter.value +
                 ' or you will get penalized :('
+        } else if (playerUnderstandsHowTheGameWorks.value < 6) {
+            document.getElementById('next-letter')!.textContent =
+                'The last letter of your previous answer becomes the first letter of your next answer.'
         } else if (playerUnderstandsHowTheGameWorks.value < 10) {
             document.getElementById('next-letter')!.textContent = 'Have fun!'
         } else {
@@ -457,6 +460,8 @@ const progressGame = (answer: string | null) => {
         document.getElementById('possible-word')!.classList.remove('flex')
     } else {
         // INCORRECT ANSWER (Invalid/doesn't exist in the dictionary)
+        // Empty the informational text so that it doesn't clutter the screen
+        document.getElementById('next-letter')!.textContent = ''
         lastPlayerAnswer.value = answer
 
         // Preflight checks: you get to be wrong 3 times for easy, 2 for medium, 1 for hard
@@ -523,19 +528,8 @@ const progressGame = (answer: string | null) => {
                 Math.max(minLetterLength.value, Math.random() * maxLetterLength.value),
             )
 
-            // 5. Show custom messages based on a numerical threshold
-            if (playerUnderstandsHowTheGameWorks.value < 5) {
-                document.getElementById('next-letter')!.textContent =
-                    'Great! Now type another valid English word starting with ' +
-                    lastCorrectLetter.value +
-                    '!\nAnswer must be a ' +
-                    targetLength.value +
-                    ' letter word or you will get penalized :('
-            } else if (playerUnderstandsHowTheGameWorks.value < 10) {
-                document.getElementById('next-letter')!.textContent = 'Have fun!'
-            } else {
-                document.getElementById('next-letter')!.textContent = ''
-            }
+            // 5b. No need to show custom messages based on a numerical threshold so as to not clutter
+            // the screen
 
             document.getElementById('terminal-prefix')!.classList.remove('hidden')
             document.getElementById('terminal-prefix')!.classList.add('flex')
@@ -890,7 +884,7 @@ onMounted(() => {
                         <!-- Menu Footer -->
                         <div class="flex h-fit items-center justify-center">
                             <div
-                                class="hidden max-w-[600px] min-w-[260px] grow items-center justify-center rounded-lg bg-gray-300 p-3 sm:flex"
+                                class="max-w-[600px] min-w-[260px] grow items-center justify-center rounded-lg bg-gray-300 p-3"
                             >
                                 <p>
                                     Read the
@@ -941,31 +935,39 @@ onMounted(() => {
 
                         <!-- Informational Bar -->
                         <div class="rounded-lg bg-gray-300 p-3">
-                            <div class="flex flex-row items-center">
-                                <div class="hidden sm:flex">Score:</div>
-                                <div class="relative">
-                                    &nbsp;{{ finalScore.toFixed(2) }}&nbsp;
-                                    <!-- Penalty modal for different lengths -->
-                                    <div
-                                        id="penalty-modal"
-                                        class="absolute top-4 left-4 hidden text-red-500"
-                                    >
-                                        -{{ difference.toFixed(2) }}
+                            <div
+                                class="flex flex-col items-start gap-y-1 sm:flex-row sm:items-center sm:gap-y-0"
+                            >
+                                <div class="flex items-center justify-center">
+                                    <div class="flex items-center justify-center">
+                                        <div class="hidden sm:flex">Score:&nbsp;</div>
+                                        <div class="relative">
+                                            {{ finalScore.toFixed(2) }}&nbsp;
+                                            <!-- Penalty modal for different lengths -->
+                                            <div
+                                                id="penalty-modal"
+                                                class="absolute top-4 left-4 hidden text-red-500"
+                                            >
+                                                -{{ difference.toFixed(2) }}
+                                            </div>
+                                            <!-- Penalty modal for different letters -->
+                                            <div
+                                                id="penalty-modal-letter"
+                                                class="absolute top-4 -left-4 hidden text-red-500"
+                                            >
+                                                -{{ differenceLetter.toFixed(2) }}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <!-- Penalty modal for different letters -->
-                                    <div
-                                        id="penalty-modal-letter"
-                                        class="absolute top-4 -left-4 hidden text-red-500"
-                                    >
-                                        -{{ differenceLetter.toFixed(2) }}
+                                    <div class="flex items-center justify-center">
+                                        | x
+                                        <p id="multiplier-penalty-modal" class="">
+                                            {{ multiplier.toFixed(2) }}&nbsp;
+                                        </p>
                                     </div>
                                 </div>
-                                | x
-                                <p id="multiplier-penalty-modal" class="">
-                                    {{ multiplier.toFixed(2) }}&nbsp;
-                                </p>
                                 <div class="flex items-center justify-center">
-                                    |&nbsp;
+                                    <div class="hidden sm:flex">|&nbsp;</div>
                                     <div class="hidden sm:flex">Difficulty:&nbsp;</div>
                                     <button
                                         v-on:click="changeDifficulty"
@@ -983,34 +985,62 @@ onMounted(() => {
                     <div
                         class="flex h-full min-h-0 max-w-[600px] min-w-[260px] grow flex-col items-center justify-center"
                     >
-                        <div
-                            class="relative flex h-full min-h-0 w-full flex-col items-start justify-center"
-                        >
+                        <div class="flex h-full min-h-0 w-full flex-col items-start justify-center">
                             <div
                                 id="playing-area"
-                                class="mb-2 flex flex-row gap-y-2 font-martian-mono text-3xl"
+                                class="mb-2 flex w-full flex-col gap-y-2 font-martian-mono text-3xl"
                             >
-                                <!-- Show the last letter tooltip so that it's more obvious that the last letter becomes the first letter for your next word -->
-                                <div class="flex flex-row">
-                                    <div class="text-gray-300">{{ firstInputLetter }}</div>
+                                <!-- Show the last letter tooltip so that it's more obvious that the last
+                                letter becomes the first letter for your next word -->
+                                <div v-if="answers.length > 0" class="flex flex-row">
                                     <div
                                         v-if="
-                                            answers.length != 0 &&
-                                            answers[answers.length - 1].length >= 3
+                                            lastPlayerAnswer.length == 0 &&
+                                            answers[answers.length - 1].length <= 8
                                         "
-                                        class="font-inter text-gray-300"
+                                        class="text-gray-300"
                                     >
-                                        ...
+                                        {{
+                                            answers[answers.length - 1].substring(
+                                                0,
+                                                answers[answers.length - 1].length - 1,
+                                            )
+                                        }}
+                                    </div>
+                                    <div
+                                        v-else-if="
+                                            lastPlayerAnswer.length == 0 &&
+                                            answers[answers.length - 1].length > 8
+                                        "
+                                        class="flex text-gray-300"
+                                    >
+                                        {{ answers[answers.length - 1].substring(0, 4) }}
+                                        <div class="font-inter">...</div>
+                                    </div>
+                                    <div
+                                        v-else-if="
+                                            lastPlayerAnswer.length != 0 &&
+                                            lastPlayerAnswer.length > 8
+                                        "
+                                        class="flex text-gray-300"
+                                    >
+                                        {{ lastPlayerAnswer.substring(0, 4) }}
+                                        <div class="font-inter">...</div>
+                                    </div>
+                                    <div v-else class="text-gray-300">
+                                        {{
+                                            lastPlayerAnswer.substring(
+                                                0,
+                                                lastPlayerAnswer.length - 1,
+                                            )
+                                        }}
                                     </div>
                                     <div class="">{{ lastInputLetter }}</div>
                                 </div>
-                                <div v-if="answers.length != 0" class="font-inter">
-                                    &nbsp;->&nbsp;
-                                </div>
 
                                 <!-- Last correct letter and answer field -->
-                                <div class="flex flex-col gap-y-2">
-                                    <div v-if="targetLength != 69" class="flex flex-row">
+                                <div class="flex w-full flex-col gap-y-2">
+                                    <div v-if="targetLength != 69" class="flex flex-row flex-wrap">
                                         {{ lastCorrectLetter }}
                                         <div
                                             v-for="uscore in new Array(targetLength - 1).fill('_')"
@@ -1019,14 +1049,16 @@ onMounted(() => {
                                             {{ uscore }}
                                         </div>
                                     </div>
-                                    <div class="flex flex-row">
+                                    <div class="flex w-full flex-row flex-wrap">
                                         <div
                                             id="terminal-prefix"
                                             class="animate-terminal font-martian-mono text-3xl"
                                         >
                                             _
                                         </div>
-                                        <div class="relative w-fit font-martian-mono text-3xl">
+                                        <div
+                                            class="flex w-full font-martian-mono text-3xl wrap-anywhere"
+                                        >
                                             <!-- Answer field -->
                                             <div id="letter-field"></div>
                                         </div>
