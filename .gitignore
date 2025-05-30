@@ -29,3 +29,5 @@ coverage
 
 *.tsbuildinfo
 .env
+cleanlist.txt
+scrabblelist.txt

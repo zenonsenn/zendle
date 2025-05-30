@@ -51,7 +51,7 @@ let handleKeyDown: any
 
 const setupWordlist = async () => {
     const url =
-        'https://raw.githubusercontent.com/dwyl/english-words/refs/heads/master/words_alpha.txt'
+        'https://raw.githubusercontent.com/zenonsenn/zendle-blog/refs/heads/main/scrabblelist.txt'
     try {
         await fetch(url)
             .then((response) => {
@@ -240,6 +240,8 @@ const progressGame = (answer: string | null) => {
 
     if (answerCorrect) {
         // CORRECT ANSWER
+        lastPlayerAnswer.value = ''
+
         // 0. Increase count of the player understanding because there is no need to show the same message over
         // and over again
         playerUnderstandsHowTheGameWorks.value++
@@ -493,6 +495,7 @@ const progressGame = (answer: string | null) => {
             if (possibleWordCount > 10) {
                 break
             }
+            const secondLetter = String.fromCharCode(Math.round(Math.random() * 25) + 65)
 
             if (targetLength.value == 69 || lastPlayerLetter == '') {
                 possibleWords.value.push('any other valid English word of your choice.')
@@ -500,6 +503,7 @@ const progressGame = (answer: string | null) => {
             } else if (
                 targetLength.value != 69 &&
                 key.substring(0, 1) == lastPlayerLetter &&
+                key.substring(1, 2) == secondLetter &&
                 value == targetLength.value
             ) {
                 possibleWords.value.push(key)
@@ -698,7 +702,7 @@ const changeDifficulty = () => {
         case 'Medium':
             // Cycle to hard
             minLetterLength.value = 2.0
-            maxLetterLength.value = 15.0
+            maxLetterLength.value = 13.0
             document.getElementById('difficulty-button')!.textContent = 'Hard'
             currentDifficulty.value = 'Hard'
             currentDifficultyMultiplier.value = 3.0
@@ -706,7 +710,7 @@ const changeDifficulty = () => {
         case 'Hard':
             // Cycle to lexicomaxxer
             minLetterLength.value = 2.0
-            maxLetterLength.value = 20.0
+            maxLetterLength.value = 15.0
             document.getElementById('difficulty-button')!.textContent = 'Lexicomaxxer'
             currentDifficulty.value = 'Lexicomaxxer'
             currentDifficultyMultiplier.value = 5.0
@@ -774,6 +778,7 @@ onMounted(() => {
 
     addKeyboardEvent()
 
+    // Previous answer search function
     document.getElementById('answer-search-field')!.addEventListener('input', (input: any) => {
         // Apply search mask
         searchMask.value = []
