@@ -590,6 +590,7 @@ const progressGame = (answer: string | null) => {
         }
 
         // GAME OVER
+        answers.value!.push('INVALID: ' + answer)
         isGameOver.value = true
 
         // 0a. Disable the input and hide the keyboard GUI
@@ -609,7 +610,7 @@ const progressGame = (answer: string | null) => {
         finalScore.value *= multiplier.value
 
         // 1. Tally score and save locally using local storage
-        console.log(localStorage)
+        // console.log(localStorage)
         try {
             if (
                 localStorage.getItem(currentDifficulty.value.toLowerCase() + 'LatestScore') ==
@@ -871,6 +872,13 @@ const toggleKeyboard = () => {
 
 const copyHistoryToClipboard = () => {
     if (answers.value.length != 0) {
+        const result = answers.value.join(', ')
+
+        navigator.clipboard.writeText(result)
+
+        displayCopyModal()
+    }
+    if (previousAnswers.value.length != 0) {
         const result = answers.value.join(', ')
 
         navigator.clipboard.writeText(result)
