@@ -40,6 +40,8 @@ const letterWeights = ref([
     1.592, 1.8021, 1.8344, 1.2846, 7.6894, 1.682, 1.2269, 1.6198, 1.5163, 6.1179, 5.8183, 9.5117,
     8.339, 8.0598,
 ])
+const isGameOver = ref(false)
+const keyboardOn = ref(true)
 
 // Timeouts
 const modalTimeoutId = ref()
@@ -150,6 +152,25 @@ const closeCookiesModal = () => {
     clearTimeout(modalTimeoutId.value)
     document.getElementById('cookies-modal')?.classList.remove('flex')
     document.getElementById('cookies-modal')?.classList.add('hidden')
+}
+
+const displayCopyModal = () => {
+    if (modalTimeoutId.value != null) {
+        clearTimeout(modalTimeoutId.value)
+    }
+
+    document.getElementById('copy-modal')?.classList.remove('hidden')
+    document.getElementById('copy-modal')?.classList.add('flex')
+    modalTimeoutId.value = setTimeout(() => {
+        document.getElementById('copy-modal')?.classList.remove('flex')
+        document.getElementById('copy-modal')?.classList.add('hidden')
+    }, 3000)
+}
+
+const closeCopyModal = () => {
+    clearTimeout(modalTimeoutId.value)
+    document.getElementById('copy-modal')?.classList.remove('flex')
+    document.getElementById('copy-modal')?.classList.add('hidden')
 }
 
 const validateAnswer = (answer: string) => {
@@ -297,7 +318,8 @@ const progressGame = (answer: string | null) => {
             }
             differenceLetter.value = actualScore.value - actualScore.value * penalty
 
-            // Avoids the issue where the penalty is huge because it is a percentage, it is set at a max of 15.0
+            // Avoids the issue where the penalty is huge because it is a percentage, it is set at a
+            // max based on the difficulty
             if (currentDifficulty.value == 'Easy' && differenceLetter.value > 10.0) {
                 differenceLetter.value = 10.0
                 finalScore.value -= differenceLetter.value
@@ -388,7 +410,8 @@ const progressGame = (answer: string | null) => {
             // This variable is to show to the player
             difference.value = actualScore.value - actualScore.value * penalty
 
-            // Avoids the issue where the penalty is huge because it is a percentage, it is set at a max of 15.0
+            // Avoids the issue where the penalty is huge because it is a percentage, it is set at a
+            // max based on the difficulty
             if (currentDifficulty.value == 'Easy' && difference.value > 10.0) {
                 difference.value = 10.0
                 finalScore.value -= difference.value
@@ -553,7 +576,6 @@ const progressGame = (answer: string | null) => {
 
             // 5b. No need to show custom messages based on a numerical threshold so as to not clutter
             // the screen
-
             document.getElementById('terminal-prefix')!.classList.remove('hidden')
             document.getElementById('terminal-prefix')!.classList.add('flex')
             document.getElementById('letter-field')!.textContent = ''
@@ -568,10 +590,15 @@ const progressGame = (answer: string | null) => {
         }
 
         // GAME OVER
+        isGameOver.value = true
+
         // 0a. Disable the input and hide the keyboard GUI
         removeKeyboardEvent()
         document.getElementById('keyboard-gui')!.classList.remove('flex')
         document.getElementById('keyboard-gui')!.classList.add('hidden')
+        document.getElementById('keyboard-toggle')!.classList.remove('flex')
+        document.getElementById('keyboard-toggle')!.classList.add('hidden')
+
         document.getElementById('playing-area')!.classList.remove('flex')
         document.getElementById('playing-area')!.classList.add('hidden')
 
@@ -581,34 +608,48 @@ const progressGame = (answer: string | null) => {
 
         finalScore.value *= multiplier.value
 
-        // 1. Score tally and save locally using cookies
-        const currentCookie = document.cookie
+        // 1. Tally score and save locally using local storage
+        console.log(localStorage)
+        try {
+            if (
+                localStorage.getItem(currentDifficulty.value.toLowerCase() + 'LatestScore') ==
+                    null &&
+                localStorage.getItem(currentDifficulty.value.toLowerCase() + 'HighestScore') == null
+            ) {
+                localStorage.setItem(
+                    currentDifficulty.value.toLowerCase() + 'LatestScore',
+                    finalScore.value.toPrecision(8),
+                )
+                localStorage.setItem(
+                    currentDifficulty.value.toLowerCase() + 'HighestScore',
+                    finalScore.value.toPrecision(8),
+                )
 
-        const d = new Date()
-        d.setTime(d.getTime() + 365 * 24 * 60 * 60 * 1000)
-        const expires = 'expires=' + d.toUTCString()
-
-        if (document.cookie == '') {
-            document.cookie = 'latestScore=' + finalScore.value + ';'
-            document.cookie = 'highestScore=' + finalScore.value + ';'
-            document.cookie = 'latestDifficulty=' + currentDifficulty.value + ';'
-            document.cookie = expires
-        } else {
-            try {
-                const cookieItems = currentCookie.split('; ')
+                // Based on difficulty
+                playerHighestScoreEver.value = finalScore.value
+            } else {
                 const maxHighScore = Math.max(
-                    Number.parseInt(
-                        cookieItems.find((row) => row.startsWith('highestScore='))!.split('=')[1],
+                    Number.parseFloat(
+                        localStorage.getItem(
+                            currentDifficulty.value.toLowerCase() + 'HighestScore',
+                        )!,
                     ),
                     finalScore.value,
                 )
+                // Based on difficulty
                 playerHighestScoreEver.value = maxHighScore
 
-                document.cookie = 'latestScore=' + finalScore.value + ';'
-                document.cookie = 'highestScore=' + maxHighScore + ';'
-                document.cookie = 'latestDifficulty=' + currentDifficulty.value + ';'
-                document.cookie = expires
-            } catch {}
+                localStorage.setItem(
+                    currentDifficulty.value.toLowerCase() + 'LatestScore',
+                    finalScore.value.toPrecision(8),
+                )
+                localStorage.setItem(
+                    currentDifficulty.value.toLowerCase() + 'HighestScore',
+                    maxHighScore.toPrecision(8),
+                )
+            }
+        } catch (error) {
+            console.error(error)
         }
 
         // 2. Clean up
@@ -634,17 +675,31 @@ const displayLetter = () => {
     const keyToDisplay = latestKey!.value.toUpperCase()
 
     if (keyToDisplay == 'ENTER') {
+        // Force clear the overflow and mismatch
+        document.getElementById('letter-overflow')!.textContent = ''
+        document.getElementById('first-letter-mismatch')!.textContent = ''
+
         progressGame(document.getElementById('letter-field')!.textContent)
         return
     }
     if (keyToDisplay == 'BACKSPACE') {
+        // Answer
         const oldText = document.getElementById('letter-field')!.textContent
         document.getElementById('letter-field')!.textContent = oldText!.substring(
             0,
             oldText!.length - 1,
         )
+        // Overflow tooltip
+        const oldOverflow = document.getElementById('letter-overflow')!.textContent
+        document.getElementById('letter-overflow')!.textContent = oldOverflow!.substring(
+            0,
+            oldOverflow!.length - 1,
+        )
 
         if (document.getElementById('letter-field')!.textContent == '') {
+            // Delete the first letter mismatch warning
+            document.getElementById('first-letter-mismatch')!.textContent = ''
+
             document.getElementById('terminal-prefix')!.classList.add('flex')
             document.getElementById('terminal-prefix')!.classList.remove('hidden')
         }
@@ -660,7 +715,22 @@ const displayLetter = () => {
         document.getElementById('terminal-prefix')!.classList.remove('flex')
         document.getElementById('terminal-prefix')!.classList.add('hidden')
 
-        document.getElementById('letter-field')!.textContent += keyToDisplay
+        const letterField = document.getElementById('letter-field')!
+        const overflowField = document.getElementById('letter-overflow')!
+        const letterMismatchField = document.getElementById('first-letter-mismatch')!
+        letterField.textContent += keyToDisplay
+
+        // Notify user of letter overflow
+        if (letterField.textContent!.length > targetLength.value) {
+            overflowField.textContent += keyToDisplay
+        }
+
+        // Notify user of first letter mismatch
+        if (lastCorrectLetter.value.length != 0) {
+            if (letterField.textContent?.substring(0, 1) != lastCorrectLetter.value) {
+                letterMismatchField.textContent = letterField.textContent!.substring(0, 1)
+            }
+        }
     }
 }
 
@@ -669,17 +739,31 @@ const displayLetter = () => {
 const inputLetter = (letter: string) => {
     // Handle these two exclusively even though it is the same code
     if (letter == 'ENTER') {
+        // Force clear the overflow and mismatch
+        document.getElementById('letter-overflow')!.textContent = ''
+        document.getElementById('first-letter-mismatch')!.textContent = ''
+
         progressGame(document.getElementById('letter-field')!.textContent)
         return
     }
     if (letter == 'BACKSPACE') {
+        // Answer
         const oldText = document.getElementById('letter-field')!.textContent
         document.getElementById('letter-field')!.textContent = oldText!.substring(
             0,
             oldText!.length - 1,
         )
+        // Overflow tooltip
+        const oldOverflow = document.getElementById('letter-overflow')!.textContent
+        document.getElementById('letter-overflow')!.textContent = oldOverflow!.substring(
+            0,
+            oldOverflow!.length - 1,
+        )
 
         if (document.getElementById('letter-field')!.textContent == '') {
+            // Delete the first letter mismatch warning
+            document.getElementById('first-letter-mismatch')!.textContent = ''
+
             document.getElementById('terminal-prefix')!.classList.add('flex')
             document.getElementById('terminal-prefix')!.classList.remove('hidden')
         }
@@ -689,7 +773,22 @@ const inputLetter = (letter: string) => {
         document.getElementById('terminal-prefix')!.classList.remove('flex')
         document.getElementById('terminal-prefix')!.classList.add('hidden')
 
-        document.getElementById('letter-field')!.textContent += letter
+        const letterField = document.getElementById('letter-field')!
+        const overflowField = document.getElementById('letter-overflow')!
+        const letterMismatchField = document.getElementById('first-letter-mismatch')!
+        letterField.textContent += letter
+
+        // Notify user of letter overflow
+        if (letterField.textContent!.length > targetLength.value) {
+            overflowField.textContent += letter
+        }
+
+        // Notify user of first letter mismatch
+        if (lastCorrectLetter.value.length != 0) {
+            if (letterField.textContent?.substring(0, 1) != lastCorrectLetter.value) {
+                letterMismatchField.textContent = letterField.textContent!.substring(0, 1)
+            }
+        }
         return
     }
 }
@@ -757,11 +856,71 @@ const clearSearchBar = () => {
     searchMask.value = []
 }
 
+const toggleKeyboard = () => {
+    if (keyboardOn.value) {
+        document.getElementById('keyboard-gui')!.classList.remove('flex')
+        document.getElementById('keyboard-gui')!.classList.add('hidden')
+        keyboardOn.value = !keyboardOn.value
+    } else {
+        document.getElementById('keyboard-gui')!.classList.remove('hidden')
+        document.getElementById('keyboard-gui')!.classList.add('flex')
+        keyboardOn.value = !keyboardOn.value
+    }
+}
+
+const copyHistoryToClipboard = () => {
+    if (answers.value.length != 0) {
+        const result = answers.value.join(', ')
+
+        navigator.clipboard.writeText(result)
+
+        displayCopyModal()
+    }
+    // Else do nothing
+}
+
+const setUpForDownload = (filename: string, text: string) => {
+    const element = document.createElement('a')
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
+    element.setAttribute('download', filename)
+
+    element.style.display = 'none'
+    element.click()
+}
+
+const exportHistoryAsTxt = () => {
+    if (previousAnswers.value.length != 0) {
+        const result = previousAnswers.value.join(', ')
+        const d = new Date()
+        const timestamp =
+            d.getFullYear() +
+            '-' +
+            d.getMonth() +
+            '-' +
+            d.getDate() +
+            'at' +
+            d.getHours() +
+            '-' +
+            d.getMinutes() +
+            '-' +
+            d.getSeconds()
+        setUpForDownload('zendle-history-' + timestamp, result)
+    }
+    // TODO: Else do nothing or later notify user that there's nothing to export
+}
+
 const restart = () => {
+    lastCorrectLetter.value = ''
+    isGameOver.value = false
+
     // 0. Enable the input and show the keyboard GUI
     addKeyboardEvent()
-    document.getElementById('keyboard-gui')!.classList.add('flex')
-    document.getElementById('keyboard-gui')!.classList.remove('hidden')
+    if (keyboardOn.value) {
+        document.getElementById('keyboard-gui')!.classList.add('flex')
+        document.getElementById('keyboard-gui')!.classList.remove('hidden')
+    }
+    document.getElementById('keyboard-toggle')!.classList.add('flex')
+    document.getElementById('keyboard-toggle')!.classList.remove('hidden')
 
     document.getElementById('playing-area')!.classList.add('flex')
     document.getElementById('playing-area')!.classList.remove('hidden')
@@ -912,31 +1071,76 @@ onMounted(() => {
                         <!-- Menu Footer -->
                         <div class="flex h-fit items-center justify-center">
                             <div
-                                class="max-w-[600px] min-w-[260px] grow items-center justify-center rounded-lg bg-gray-300 p-3"
+                                class="relative flex max-w-[600px] min-w-[260px] grow flex-col items-start justify-between gap-y-2 rounded-lg bg-gray-300 p-3 sm:flex-row sm:items-center sm:gap-y-0"
                             >
-                                <p>
+                                <div>
                                     Read the
                                     <router-link
                                         to="/blog"
-                                        class="cursor-pointer rounded-lg bg-calm-grey p-1 hover:bg-zendle-orange"
+                                        class="cursor-pointer rounded-lg bg-calm-grey px-2 py-1 hover:bg-zendle-orange"
                                         >blog!</router-link
                                     >
-                                </p>
+                                </div>
+                                <div>
+                                    <button
+                                        v-on:click="copyHistoryToClipboard"
+                                        v-if="!isGameOver"
+                                        class="cursor-pointer rounded-lg bg-calm-grey px-2 py-1 hover:bg-zendle-orange"
+                                    >
+                                        Copy history to clipboard
+                                    </button>
+                                    <div v-else class="flex flex-row items-center justify-center">
+                                        <button
+                                            v-on:click="copyHistoryToClipboard"
+                                            class="cursor-pointer rounded-lg bg-calm-grey px-2 py-1 hover:bg-zendle-orange"
+                                        >
+                                            Copy
+                                        </button>
+                                        <div>&nbsp;or&nbsp;</div>
+                                        <button
+                                            v-on:click="exportHistoryAsTxt"
+                                            class="cursor-pointer rounded-lg bg-calm-grey px-2 py-1 hover:bg-zendle-orange"
+                                        >
+                                            Export history as .txt
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Copy success information -->
+                                <div
+                                    id="copy-modal"
+                                    class="absolute right-0 bottom-24 hidden w-full max-w-[600px] justify-end sm:bottom-16 sm:p-0"
+                                >
+                                    <div
+                                        class="z-10 flex flex-row items-center justify-center rounded-lg bg-gray-300 p-3"
+                                    >
+                                        History copied successfully!
+                                        <button
+                                            v-on:click="closeCopyModal"
+                                            class="flex cursor-pointer items-baseline"
+                                        >
+                                            <span class="material-symbols-outlined"> close </span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Export success information -->
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Cookies information -->
+            <!-- Modal -->
             <div class="relative flex w-full items-center justify-center">
+                <!-- Cookies information -->
                 <div
                     id="cookies-modal"
                     class="absolute top-4 hidden w-full max-w-[600px] px-4 sm:p-0"
                 >
                     <div class="z-10 flex flex-row items-center rounded-lg bg-gray-300 p-3">
-                        Cookies contain your scores; that's it. They are stored locally by your
-                        browser. We don't have servers to collect any of your data.
+                        Your scores are stored in your browser's local storage; that's it. We don't
+                        have servers to collect any of your data.
                         <button v-on:click="closeCookiesModal" class="cursor-pointer">
                             <span class="material-symbols-outlined"> close </span>
                         </button>
@@ -1013,7 +1217,9 @@ onMounted(() => {
                     <div
                         class="flex h-full min-h-0 max-w-[600px] min-w-[260px] grow flex-col items-center justify-center"
                     >
-                        <div class="flex h-full min-h-0 w-full flex-col items-start justify-center">
+                        <div
+                            class="relative flex h-full min-h-0 w-full flex-col items-start justify-center"
+                        >
                             <div
                                 id="playing-area"
                                 class="mb-2 flex w-full flex-col gap-y-2 font-martian-mono text-3xl"
@@ -1077,6 +1283,8 @@ onMounted(() => {
                                             {{ uscore }}
                                         </div>
                                     </div>
+
+                                    <!-- Main input area -->
                                     <div class="flex w-full flex-row flex-wrap">
                                         <div
                                             id="terminal-prefix"
@@ -1085,10 +1293,19 @@ onMounted(() => {
                                             _
                                         </div>
                                         <div
-                                            class="flex w-full font-martian-mono text-3xl wrap-anywhere"
+                                            class="relative flex w-fit font-martian-mono text-3xl wrap-anywhere"
                                         >
                                             <!-- Answer field -->
                                             <div id="letter-field"></div>
+                                            <!-- Letter overflow -->
+                                            <div
+                                                id="letter-overflow"
+                                                class="absolute top-0 right-0 z-10 w-fit bg-calm-grey text-zendle-orange"
+                                            ></div>
+                                            <div
+                                                id="first-letter-mismatch"
+                                                class="absolute top-0 left-0 z-10 w-fit bg-calm-grey text-zendle-orange"
+                                            ></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1104,16 +1321,17 @@ onMounted(() => {
                             >
                                 <div v-if="playerHighestScoreEver > 0">
                                     Your {{ difficultyAtStart.toLowerCase() }} difficulty game is
-                                    over because {{ lastPlayerAnswer }} isn't a valid English word
-                                    :(
+                                    over because {{ lastPlayerAnswer }} is unique to you but hasn't
+                                    been documented yet :(
                                     <br />
-                                    Your score is {{ finalScore.toFixed(2) }}. Your highest score is
+                                    Your score is {{ finalScore.toFixed(2) }}. Your highest score
+                                    for this difficulty is
                                     {{ playerHighestScoreEver.toFixed(2) }}&nbsp;&nbsp;
                                 </div>
                                 <div v-else>
                                     Your {{ difficultyAtStart.toLowerCase() }} difficulty game is
-                                    over because {{ lastPlayerAnswer }} isn't a valid English word
-                                    :(
+                                    over because {{ lastPlayerAnswer }} is unique to you but hasn't
+                                    been documented yet :(
                                     <br />
                                     Your score is {{ finalScore.toFixed(2) }}&nbsp;&nbsp;
                                 </div>
@@ -1150,6 +1368,25 @@ onMounted(() => {
                                     </div>
                                 </div>
                             </div>
+                            <div
+                                id="keyboard-toggle"
+                                class="absolute right-0 bottom-4 flex h-fit w-full"
+                            >
+                                <button
+                                    v-on:click="toggleKeyboard"
+                                    class="cursor-pointer rounded-lg bg-gray-300 px-2 py-1 hover:bg-zendle-orange"
+                                    v-if="keyboardOn"
+                                >
+                                    Hide Keyboard
+                                </button>
+                                <button
+                                    v-on:click="toggleKeyboard"
+                                    class="cursor-pointer rounded-lg bg-gray-300 px-2 py-1 hover:bg-zendle-orange"
+                                    v-if="!keyboardOn"
+                                >
+                                    Show Keyboard
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1184,9 +1421,9 @@ onMounted(() => {
                                 :onclick="displayCookiesModal"
                                 class="cursor-pointer rounded-lg bg-calm-grey p-1 hover:bg-zendle-orange"
                             >
-                                cookies
+                                data
                             </button>
-                            are local.
+                            is local.
                         </p>
                     </div>
                     <div
@@ -1204,7 +1441,7 @@ onMounted(() => {
                                 :onclick="displayCookiesModal"
                                 class="cursor-pointer rounded-lg bg-calm-grey p-1 hover:bg-zendle-orange"
                             >
-                                Cookies.
+                                Your data.
                             </button>
                         </p>
                     </div>
