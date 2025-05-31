@@ -925,7 +925,8 @@ const restart = () => {
     lastCorrectLetter.value = ''
     isGameOver.value = false
 
-    // 0. Enable the input and show the keyboard GUI
+    // 0. Enable the input and show the keyboard GUI]
+    removeKeyboardEvent()
     addKeyboardEvent()
     if (keyboardOn.value) {
         document.getElementById('keyboard-gui')!.classList.add('flex')
