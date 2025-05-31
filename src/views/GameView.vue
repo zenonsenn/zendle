@@ -614,7 +614,8 @@ const progressGame = (answer: string | null) => {
             if (
                 localStorage.getItem(currentDifficulty.value.toLowerCase() + 'LatestScore') ==
                     null &&
-                localStorage.getItem(currentDifficulty.value.toLowerCase() + 'HighestScore') == null
+                localStorage.getItem(currentDifficulty.value.toLowerCase() + 'HighestS  core') ==
+                    null
             ) {
                 localStorage.setItem(
                     currentDifficulty.value.toLowerCase() + 'LatestScore',
@@ -898,13 +899,16 @@ const exportHistoryAsTxt = () => {
             d.getMonth() +
             '-' +
             d.getDate() +
-            'at' +
+            '_at_' +
             d.getHours() +
             '-' +
             d.getMinutes() +
             '-' +
             d.getSeconds()
-        setUpForDownload('zendle-history-' + timestamp, result)
+        setUpForDownload(
+            'zendle-history-' + difficultyAtStart.value.toLowerCase() + '-' + timestamp,
+            result,
+        )
     }
     // TODO: Else do nothing or later notify user that there's nothing to export
 }
