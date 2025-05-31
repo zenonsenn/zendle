@@ -879,7 +879,7 @@ const copyHistoryToClipboard = () => {
         displayCopyModal()
     }
     if (previousAnswers.value.length != 0) {
-        const result = answers.value.join(', ')
+        const result = previousAnswers.value.join(', ')
 
         navigator.clipboard.writeText(result)
 
