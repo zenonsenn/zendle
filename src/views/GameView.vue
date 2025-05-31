@@ -51,7 +51,7 @@ let handleKeyDown: any
 
 const setupWordlist = async () => {
     const url =
-        'https://raw.githubusercontent.com/zenonsenn/zendle-blog/refs/heads/main/scrabblelist.txt'
+        'https://raw.githubusercontent.com/zenonsenn/zendle-blog/refs/heads/main/notebooks/full_validation_dictionary.txt'
     try {
         await fetch(url)
             .then((response) => {
